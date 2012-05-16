@@ -8,7 +8,7 @@ var Athlete = {};
  *   var publicKey = 'mypublickey',
  *       privateKey = 'myprivatekey',
  *
- *   var client = AthleteAPIClient({
+ *   var client = AthleteApiClient({
  *       publicKey: 'mypublickey',
  *       privateKey: 'myprivatekey',
  *       endpoint: 'http://www.athlete.com'
@@ -18,12 +18,15 @@ var Athlete = {};
  *   doAjaxStuff(url)
  *
  * Depends on CryptoJS 3 (https://code.google.com/p/crypto-js/).
- * Only hmac-sha256.js is needed and it is distributed with this client.
+ * Only hmac-sha256.js and enc-base64.js are required. They are distributed with this client.
  */
-Athlete.APIClient = function(options) {
-    this.endpoint = this.options.endpoint;
-    this.publicKey = this.options.publicKey;
-    this.privateKey = this.options.privateKey;
+Athlete.ApiClient = function(options) {
+    if (!(options.publicKey && options.privateKey)) {
+        throw "publicKey and privateKey are required";
+    }
+    this.endpoint = options.endpoint;
+    this.publicKey = options.publicKey;
+    this.privateKey = options.privateKey;
 };
 Athlete.ApiClient.prototype = {
     /**
@@ -34,7 +37,7 @@ Athlete.ApiClient.prototype = {
         qsParams = qsParams || {};
 
         qsParams.public_key = this.publicKey;
-        qsParams.timestemp = this._formatDateISO8601(new Date());
+        qsParams.timestamp = this._formatDateISO8601(new Date());
 
         var stringToSign = [
             method.toUpperCase(),
@@ -42,9 +45,9 @@ Athlete.ApiClient.prototype = {
             this._serializeParams(qsParams)
         ].join("\n");
 
-        qsParams.signature = this._digest(privateKey, stringToSign);
+        qsParams.signature = this._digest(this.privateKey, stringToSign);
 
-        return this.endpoint + path + '?' + this._serializeparams(qsParams);
+        return this.endpoint + path + '?' + this._serializeParams(qsParams);
     },
 
     /**
@@ -69,7 +72,22 @@ Athlete.ApiClient.prototype = {
         if (typeof(CryptoJS) === 'undefined' || typeof(CryptoJS.HmacSHA256) === 'undefined') {
             throw "Can't find CryptoJS.HmacSHA256. Perhaps you didn't load it.";
         }
+        if (typeof(CryptoJS.enc.Base64) === 'undefined') {
+            throw "Can't find CryptoJS Base64 encoding library.";
+        }
         var hash = CryptoJS.HmacSHA256(msg, key);
         return hash.toString(CryptoJS.enc.Base64);
+    },
+
+    _serializeParams: function(params) {
+        var parts = [];
+        for (var key in params) {
+            parts.push([this._urlEncode(key), this._urlEncode(params[key])].join('='));
+        }
+        return parts.sort().join('&'); 
+    },
+
+    _urlEncode: function(str) {
+        return encodeURIComponent(str);
     }
 };
