@@ -5,17 +5,14 @@ var Athlete = {};
  * Currently it just helps with request signatures.
  * Use it like this:
  *
- *   var publicKey = 'mypublickey',
- *       privateKey = 'myprivatekey',
- *
- *   var client = AthleteApiClient({
+ *   var client = new AthleteApiClient({
  *       publicKey: 'mypublickey',
  *       privateKey: 'myprivatekey',
  *       endpoint: 'http://www.athlete.com'
  *   });
  *   
  *   var url = client.sign('/api/v1/users/5/', 'get');
- *   doAjaxStuff(url)
+ *   doAjaxStuff(url);
  *
  * Depends on CryptoJS 3 (https://code.google.com/p/crypto-js/).
  * Only hmac-sha256.js and enc-base64.js are required. They are distributed with this client.
